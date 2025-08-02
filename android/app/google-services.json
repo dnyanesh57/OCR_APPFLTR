@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1058526483012",
+    "project_id": "ocrsjfltr",
+    "storage_bucket": "ocrsjfltr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1058526483012:android:92d3935bd53ed5de4e6211",
+        "android_client_info": {
+          "package_name": "com.example.concrete_cube_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDzWnUDnrY57nt4H7jBFd8ATDr-9b9Y-Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

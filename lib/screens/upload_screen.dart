@@ -90,7 +90,23 @@ class _UploadScreenState extends State<UploadScreen> {
 
           // Case 3: Data loaded successfully
           final userData = snapshot.data!;
-          final List<String> siteList = (userData['sites'] as List<dynamic>?)?.map((site) => site.toString()).toList() ?? [];
+          
+          // --- ROBUST DATA CHECK ---
+          // Explicitly check if the 'sites' field exists and is a list.
+          if (userData['sites'] == null || !(userData['sites'] is List)) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Configuration Error: The "sites" field is missing or is not an array in your user profile in the Firestore database.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+          // --- END OF CHECK ---
+
+          final List<String> siteList = (userData['sites'] as List<dynamic>).map((site) => site.toString()).toList();
 
           // Set the initial selected site if it hasn't been set yet
           if (_selectedSiteId == null && siteList.isNotEmpty) {

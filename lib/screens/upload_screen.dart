@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../services/firebase_service.dart';
-import 'upload_log_screen.dart'; // This line was missing
+import 'upload_log_screen.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -13,29 +13,20 @@ class UploadScreen extends StatefulWidget {
 }
 
 class _UploadScreenState extends State<UploadScreen> {
-  List<String> _siteList = [];
+  // State variables
   String? _selectedSiteId;
   File? _imageFile;
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
+  // This future will hold the user's data once loaded
+  late Future<Map<String, dynamic>?> _userDataFuture;
+
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    final data = await Provider.of<FirebaseService>(context, listen: false).getUserData();
-    if (data != null && data['sites'] is List && mounted) {
-      final sites = List<String>.from(data['sites']);
-      setState(() {
-        _siteList = sites;
-        if (sites.isNotEmpty) {
-          _selectedSiteId = sites[0];
-        }
-      });
-    }
+    // Load user data when the screen is first built
+    _userDataFuture = Provider.of<FirebaseService>(context, listen: false).getUserData();
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -85,64 +76,87 @@ class _UploadScreenState extends State<UploadScreen> {
           IconButton(icon: const Icon(Icons.logout), onPressed: firebaseService.signOut),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_siteList.isEmpty)
-                const Center(child: CircularProgressIndicator())
-              else
-                DropdownButtonFormField<String>(
-                  value: _selectedSiteId,
-                  decoration: const InputDecoration(labelText: 'Select Site', border: OutlineInputBorder()),
-                  items: _siteList.map((String site) {
-                    return DropdownMenuItem<String>(value: site, child: Text(site));
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() => _selectedSiteId = newValue);
-                  },
-                ),
-              const SizedBox(height: 20),
-              Container(
-                height: 300,
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8)),
-                child: _imageFile != null
-                    ? Image.file(_imageFile!, fit: BoxFit.cover)
-                    : const Center(child: Text('No image selected')),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _userDataFuture,
+        builder: (context, snapshot) {
+          // Case 1: Still loading user data
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // Case 2: Error loading data
+          if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+            return const Center(child: Text('Error: Could not load user data.'));
+          }
+
+          // Case 3: Data loaded successfully
+          final userData = snapshot.data!;
+          final List<String> siteList = (userData['sites'] as List<dynamic>?)?.map((site) => site.toString()).toList() ?? [];
+
+          // Set the initial selected site if it hasn't been set yet
+          if (_selectedSiteId == null && siteList.isNotEmpty) {
+            _selectedSiteId = siteList[0];
+          }
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Camera'),
-                    onPressed: () => _pickImage(ImageSource.camera),
+                  if (siteList.isEmpty)
+                    const Text('No sites assigned to this user.', textAlign: TextAlign.center)
+                  else
+                    DropdownButtonFormField<String>(
+                      value: _selectedSiteId,
+                      decoration: const InputDecoration(labelText: 'Select Site', border: OutlineInputBorder()),
+                      items: siteList.map((String site) {
+                        return DropdownMenuItem<String>(value: site, child: Text(site));
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() => _selectedSiteId = newValue);
+                      },
+                    ),
+                  const SizedBox(height: 20),
+                  Container(
+                    height: 300,
+                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8)),
+                    child: _imageFile != null
+                        ? Image.file(_imageFile!, fit: BoxFit.cover)
+                        : const Center(child: Text('No image selected')),
                   ),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Gallery'),
-                    onPressed: () => _pickImage(ImageSource.gallery),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Camera'),
+                        onPressed: () => _pickImage(ImageSource.camera),
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Gallery'),
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 30),
+                  if (_isUploading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: _uploadImage,
+                      child: const Text('Upload and Process', style: TextStyle(color: Colors.white)),
+                    ),
                 ],
               ),
-              const SizedBox(height: 30),
-              if (_isUploading)
-                const Center(child: CircularProgressIndicator())
-              else
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: _uploadImage,
-                  child: const Text('Upload and Process', style: TextStyle(color: Colors.white)),
-                ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

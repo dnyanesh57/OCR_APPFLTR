@@ -32,18 +32,23 @@ class FirebaseService with ChangeNotifier {
     return doc.data();
   }
 
+  // --- MODIFIED FUNCTION WITH DETAILED ERROR HANDLING ---
   Future<String?> uploadImage(File imageFile, String siteId) async {
     if (currentUser == null) return "User not logged in.";
     
     try {
+      debugPrint("Starting image upload...");
       final fileName = '${DateTime.now().toIso8601String()}.jpg';
       final storagePath = 'site_images/${currentUser!.uid}/$fileName';
       final ref = _storage.ref().child(storagePath);
       
+      debugPrint("Uploading to storage path: $storagePath");
       UploadTask uploadTask = ref.putFile(imageFile);
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
+      debugPrint("Image uploaded successfully. URL: $downloadUrl");
 
+      debugPrint("Adding document to Firestore...");
       await _firestore.collection('testDocuments').add({
         'userId': currentUser!.uid,
         'siteId': siteId,
@@ -52,8 +57,18 @@ class FirebaseService with ChangeNotifier {
         'status': 'uploaded',
         'createdAt': FieldValue.serverTimestamp(),
       });
+      debugPrint("Firestore document added successfully.");
       return null; // Success
+    } on FirebaseException catch (e) {
+      // This will catch specific Firebase errors like permission denied
+      debugPrint("Firebase Error Occurred: ${e.code} - ${e.message}");
+      if (e.code == 'permission-denied') {
+        return "Permission Denied. Please check your Firebase Storage and Firestore security rules.";
+      }
+      return "Firebase Error: ${e.message}";
     } catch (e) {
+      // This will catch any other errors, like network issues
+      debugPrint("A general error occurred during upload: $e");
       return e.toString();
     }
   }

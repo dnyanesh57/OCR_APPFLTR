@@ -93,7 +93,7 @@ class _UploadScreenState extends State<UploadScreen> {
           
           // --- ROBUST DATA CHECK ---
           // Explicitly check if the 'sites' field exists and is a list.
-          if (userData['sites'] == null || !(userData['sites'] is List)) {
+          if (userData['sites'] == null || userData['sites'] is! List) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),

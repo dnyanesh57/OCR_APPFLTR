@@ -1,3 +1,17 @@
+buildscript {
+    val kotlin_version by extra("1.9.20") // Ensure this matches your project's Kotlin version
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.2.0") // Or your project's AGP version
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+        // This line tells Gradle where to find the google-services plugin
+        classpath("com.google.gms:google-services:4.4.2") 
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -5,17 +19,14 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
+rootProject.buildDir = File("../build")
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
+    project.buildDir = File("${rootProject.buildDir}/${project.name}")
 }
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
+tasks.register("clean", Delete::class) {
+    delete(rootProject.buildDir)
 }

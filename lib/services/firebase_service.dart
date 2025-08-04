@@ -32,14 +32,19 @@ class FirebaseService with ChangeNotifier {
     return doc.data();
   }
 
-  // --- MODIFIED FUNCTION WITH NEW STORAGE PATH ---
+  // --- MODIFIED FUNCTION WITH PATH SANITIZATION ---
   Future<String?> uploadImage(File imageFile, String siteId) async {
     if (currentUser == null) return "User not logged in.";
     
     try {
       final fileName = '${DateTime.now().toIso8601String()}.jpg';
-      // This is the new, updated path structure
-      final storagePath = 'site_images/$siteId/${currentUser!.uid}/$fileName';
+      
+      // --- THIS IS THE CRITICAL FIX ---
+      // Replace invalid path characters like '/' with an underscore '_'
+      final sanitizedSiteId = siteId.replaceAll(RegExp(r'[/\\]'), '_');
+      
+      // This now creates a valid, safe path for Firebase Storage
+      final storagePath = 'site_images/$sanitizedSiteId/${currentUser!.uid}/$fileName';
       final ref = _storage.ref().child(storagePath);
       
       UploadTask uploadTask = ref.putFile(imageFile);
@@ -48,7 +53,7 @@ class FirebaseService with ChangeNotifier {
 
       await _firestore.collection('testDocuments').add({
         'userId': currentUser!.uid,
-        'siteId': siteId,
+        'siteId': siteId, // We still save the original, human-readable siteId
         'storagePath': storagePath,
         'imageUrl': downloadUrl,
         'status': 'uploaded',
@@ -58,7 +63,7 @@ class FirebaseService with ChangeNotifier {
     } on FirebaseException catch (e) {
       debugPrint("Firebase Error Occurred: ${e.code} - ${e.message}");
       if (e.code == 'permission-denied') {
-        return "Permission Denied. Please check your Firebase Storage rules.";
+        return "Permission Denied. Please check your Firebase Storage rules and ensure your app's SHA-1 key is correct in Firebase.";
       }
       return "Firebase Error: ${e.message}";
     } catch (e) {

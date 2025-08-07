@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // --- PRIMARY BRAND COLORS ---
-  // Your company's colors
   static const Color primaryColor = Color(0xFF00DEDA); // Turquoise-like color
   static const Color accentColor = Color(0xFF939598);  // Light gray
   static const Color backgroundColor = Color(0xFFFFFFFF); // White
@@ -13,20 +12,21 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: primaryColor,
       secondary: accentColor,
-      background: backgroundColor,
-      onPrimary: textColor,
-      onSecondary: textColor,
-      onBackground: textColor,
     ),
     scaffoldBackgroundColor: backgroundColor,
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: primaryColor,
-      foregroundColor: textColor, // Text/icon color on app bar
+      foregroundColor: textColor, // Use black text on the turquoise app bar
+    ),
+    textTheme: const TextTheme(
+      // CORRECTED: headline1 is deprecated, use headlineLarge instead
+      headlineLarge: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      bodyMedium: TextStyle(color: textColor), // Ensure default text is black
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: accentColor, // Button background
-        foregroundColor: textColor, // Button text color
+        backgroundColor: accentColor, // Button background is light gray
+        foregroundColor: textColor, // Button text color is black
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -36,21 +36,13 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: accentColor), // Lighter border
+        borderSide: BorderSide(color: Colors.grey.shade400),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor, width: 2),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
       ),
-      labelStyle: TextStyle(color: primaryColor),
-      hintStyle: TextStyle(color: accentColor),
-    ),
-    textTheme: TextTheme(
-      headline1: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-      bodyText1: TextStyle(color: textColor),
-      bodyText2: TextStyle(color: accentColor), // Subtle text color
-      button: TextStyle(color: textColor),
-      caption: TextStyle(color: accentColor),
+      labelStyle: const TextStyle(color: primaryColor),
     ),
   );
 }

@@ -39,10 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Add your logo here
               Image.asset('assets/images/logo.png', height: 80),
               const SizedBox(height: 24),
-              Text('Concrete Test App', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Concrete Test App', style: Theme.of(context).textTheme.headlineLarge),
               const SizedBox(height: 32),
               TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 16),
@@ -50,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 32),
               _isLoading
                   ? const CircularProgressIndicator()
-                  // The button now uses the style from your theme
                   : ElevatedButton(onPressed: _login, child: const Text('Login')),
             ],
           ),

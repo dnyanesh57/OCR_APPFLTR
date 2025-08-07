@@ -23,7 +23,6 @@ class MyApp extends StatelessWidget {
       create: (context) => FirebaseService(),
       child: MaterialApp(
         title: 'Concrete Test App',
-        // Apply your new theme here
         theme: AppTheme.lightTheme, 
         home: const AuthGate(),
       ),

@@ -1,67 +1,71 @@
+// (Imports remain the same)
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../services/firebase_service.dart';
+import 'upload_log_screen.dart';
 
-class UploadLogScreen extends StatelessWidget {
-  const UploadLogScreen({super.key});
+class UploadScreen extends StatefulWidget {
+// ... (rest of the class is unchanged)
+// ...
 
   @override
   Widget build(BuildContext context) {
-    final firebaseService = Provider.of<FirebaseService>(context, listen: false);
-
+    final firebaseService = Provider.of<FirebaseService>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recent Uploads'),
+        title: const Text('Upload Test'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UploadLogScreen())),
+          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: firebaseService.signOut),
+        ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: firebaseService.getUploadLog(),
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _userDataFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No recent uploads found.'));
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong.'));
-          }
+          // ... (FutureBuilder logic is unchanged)
+          // ...
 
-          final documents = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: documents.length,
-            itemBuilder: (context, index) {
-              final doc = documents[index].data() as Map<String, dynamic>;
-              final timestamp = doc['createdAt'] as Timestamp?;
-              final date = timestamp != null
-                  ? DateFormat('dd-MM-yyyy, hh:mm a').format(timestamp.toDate())
-                  : 'N/A';
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: doc['imageUrl'] != null
-                      ? Image.network(
-                          doc['imageUrl'],
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            return progress == null ? child : const Center(child: CircularProgressIndicator());
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.image_not_supported, size: 50);
-                          },
-                        )
-                      : const Icon(Icons.image_not_supported, size: 50),
-                  title: Text(doc['siteId'] ?? 'Unknown Site'),
-                  subtitle: Text('Uploaded on: $date\nStatus: ${doc['status'] ?? 'N/A'}'),
-                  isThreeLine: true,
-                ),
-              );
-            },
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ... (Dropdown and Image container are unchanged)
+                  // ...
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Camera'),
+                        onPressed: () => _pickImage(ImageSource.camera),
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Gallery'),
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  if (_isUploading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    // This button now uses the accent color from your theme
+                    ElevatedButton(
+                      onPressed: _uploadImage,
+                      child: const Text('Upload and Process'),
+                    ),
+                ],
+              ),
+            ),
           );
         },
       ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'screens/auth_gate.dart';
 import 'services/firebase_service.dart';
+import 'theme/app_theme.dart'; // Import your new theme file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,10 +23,8 @@ class MyApp extends StatelessWidget {
       create: (context) => FirebaseService(),
       child: MaterialApp(
         title: 'Concrete Test App',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
+        // Apply your new theme here
+        theme: AppTheme.lightTheme, 
         home: const AuthGate(),
       ),
     );
